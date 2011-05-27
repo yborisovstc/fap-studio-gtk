@@ -9,7 +9,6 @@
 #include "app.h"
 
 //const char* KLogFileName = "fap-tias.log";
-const char* KSpecFileName = "ut_emtran_spec_2.xml";
 /* Time slice of FAP environment, in milliseconds */
 const gint KFapeTimeSlice = 50;
 
@@ -37,13 +36,6 @@ int main(int argc, char *argv[])
 
     gtk_widget_show(main_window);
 #endif
-
-    // Create environment
-//    fape = CAE_Env::NewL(1, NULL, KLogFileName, 1);
-    //CagProvider* cagprov = new CagProvider(NULL);
-//    CagProxy* proxy = new CagProxy(NULL);
-//    MAE_Opv* viewproxy = cagprov->CreateViewProxy();
-//    fape->Root()->SetBaseViewProxy(viewproxy, ETrue);
 
     /* Use idle of main loop to drive FAP environment */
     g_timeout_add(KFapeTimeSlice, idle_event_handler, NULL);
