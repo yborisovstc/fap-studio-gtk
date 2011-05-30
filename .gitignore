@@ -42,7 +42,6 @@ Doxyfile
 stamp-*
 config.*
 libtool
-files
 *.orig
 *.substvars
 moc_*
