@@ -1,11 +1,6 @@
 
 #include <gtk/gtk.h>
 #include <stdlib.h>
-#include <fapext.h>
-#include <fapstext.h>
-#include <view.h>
-#include <viewgtk.h>
-#include <cagprov.h>
 #include "app.h"
 
 //const char* KLogFileName = "fap-tias.log";
