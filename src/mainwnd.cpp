@@ -90,7 +90,25 @@ void CsuMainWndClient::OnSizeRequest(GtkRequisition* aRequisition)
     }
 }
 
-CsuMainWnd::CsuMainWnd(const string& aName): CagWindow(aName)
+
+// Log view
+
+
+CsuLogView::CsuLogView(const string& aName): CagTextView(aName)
+{
+    SetEditable(EFalse);
+}
+
+void CsuLogView::SetLogFileName(const string& aLogFileName)
+{
+    iLogFileName = aLogFileName;
+}
+
+
+// Main window
+//
+
+CsuMainWnd::CsuMainWnd(const string& aName): CagWindow(aName), iMenuObs(NULL)
 {
     // Vertical layot - main
     iVboxMain = new CagVBox("VboxMain");
@@ -104,14 +122,31 @@ CsuMainWnd::CsuMainWnd(const string& aName): CagWindow(aName)
     iMenu = new CsuMainWndMenu();
     iVboxMenuTbar->PackStart(iMenu, false, false, 1);
     iMenu->Show();
+    
     // Toolbar
     iToolbar = new CagToolBar("Toolbar");
     iVboxMenuTbar->PackStart(iToolbar, false, false, 1);
     iToolbar->Show();
+    // Button "Step"
+    //CagToolButton* sBtnStep = new CagToolButton("BtnBack", GTK_STOCK_GO_BACK);
+    CagToolButton* sBtnStep = new CagToolButton("BtnStep");
+    sBtnStep->SetLabel("Step");
+    sBtnStep->SetObserver(this);
+    iToolbar->Insert(sBtnStep, 0);
+    sBtnStep->Show();
+    
+    // V-paned
+    iVpaned = new CagVPaned("VPaned");
+    iVboxMain->PackStart(iVpaned, false, false, 2);
+    iVpaned->Show();
     // Client area
     iClientWnd = new CsuMainWndClient();
-    iVboxMain->PackStart(iClientWnd, false, false, 2);
+    iVpaned->Add1(iClientWnd);
     iClientWnd->Show();
+    // Log View
+    iLogView = new CsuLogView("Logview");
+    iVpaned->Add2(iLogView);
+    iLogView->Show();
 }
 
 CsuMainWnd::~CsuMainWnd()
@@ -125,6 +160,8 @@ void* CsuMainWnd::DoGetObj(const char *aName)
 	return this;
     else if (strcmp(aName, MOpMainWnd::Type()) == 0)
 	return (MOpMainWnd*) this;
+    else if (strcmp(aName, MagToolButtonObserver::Type()) == 0)
+	return (MagToolButtonObserver*) this;
     else return CagWindow::DoGetObj(aName);
 }
 
@@ -140,6 +177,22 @@ CagToolBar* CsuMainWnd::Toolbar()
 
 void CsuMainWnd::SetMenuObserver(MsuMwndMenuObserver* aObs)
 {
+    _FAP_ASSERT(iMenuObs == NULL);
+    iMenuObs = aObs;
     iMenu->SetMenuObserver(aObs);
+}
+
+void CsuMainWnd::SetEnvLog(const string& aLogFileName)
+{
+    iLogView->SetLogFileName(aLogFileName);
+}
+
+void CsuMainWnd::OnClicked(CagToolButton* aBtn)
+{
+    if (aBtn == iToolbar->Child("BtnStep")) {
+	if (iMenuObs != NULL) {
+	    iMenuObs->OnCmd(MsuMwndMenuObserver::ECmd_Step);
+	}
+    }
 }
 

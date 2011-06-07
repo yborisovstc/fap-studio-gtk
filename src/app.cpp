@@ -30,6 +30,9 @@ void CsuApp::OnCmd(TCmd aCmd)
     else if (aCmd == ECmd_FileSaveAs) {
 	OnCmdFileSaveAs();
     }
+    else if (aCmd == ECmd_Step) {
+	OnCmdStep();
+    }
 }
 
 TBool CsuApp::OnCmdUpdateRequest(TCmd aCmd)
@@ -49,6 +52,11 @@ void CsuApp::OnCmdOpenFile()
 	g_free (filename);
     }
     gtk_widget_destroy (dialog);
+}
+
+void CsuApp::OnCmdStep()
+{
+    iCaeEnv->Step();
 }
 
 void CsuApp::OpenFile(const string& aFileName)

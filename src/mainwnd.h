@@ -7,6 +7,8 @@
 #include <cagbox.h>
 #include <caglayout.h>
 #include <cagtoolbar.h>
+#include <cagpaned.h>
+#include <cagtextview.h>
 #include <mainwndiface.h>
 
 class CsuMainWndMenuFile: public CagMenu
@@ -26,6 +28,7 @@ class MsuMwndMenuObserver
 	{
 	    ECmd_FileOpen,
 	    ECmd_FileSaveAs,
+	    ECmd_Step,
 	};
     public:
 	virtual void OnCmd(TCmd aCmd) = 0;
@@ -58,15 +61,27 @@ class CsuMainWndClient: public CagLayout
 	virtual void OnSizeRequest(GtkRequisition* aRequisition);
 };
 
-class CsuMainWnd: public CagWindow, public MOpMainWnd
+class CsuLogView: public CagTextView
+{
+    public:
+	CsuLogView(const string& aName);
+	void SetLogFileName(const string& aLogFileName);
+    private:
+	string iLogFileName;
+};
+
+class CsuMainWnd: public CagWindow, public MOpMainWnd, public MagToolButtonObserver
 {
     public:
 	static inline const char* Type() { return "CsuMainWnd";} ; 
 	CsuMainWnd(const string& aName);
 	virtual ~CsuMainWnd();
 	void SetMenuObserver(MsuMwndMenuObserver* aObs);
+	void SetEnvLog(const string& aLogFileName);
 	// From CAE_Base
 	virtual void *DoGetObj(const char *aName);
+	// From MagToolButtonObserver
+	virtual void OnClicked(CagToolButton* aBtn);
     private:
 	// From MOpMainWnd
 	virtual CagContainer* ClientWnd();
@@ -77,6 +92,9 @@ class CsuMainWnd: public CagWindow, public MOpMainWnd
 	CsuMainWndMenu* iMenu;
 	CagToolBar* iToolbar;
 	CsuMainWndClient* iClientWnd;
+	CagVPaned* iVpaned;
+	CsuLogView* iLogView;
+	MsuMwndMenuObserver* iMenuObs;
 };
 
 #endif 

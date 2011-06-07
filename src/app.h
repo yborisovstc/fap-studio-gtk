@@ -14,6 +14,7 @@ class CsuApp: public MsuMwndMenuObserver
     private:
 	void OnCmdOpenFile();
 	void OnCmdFileSaveAs();
+	void OnCmdStep();
 	void OpenFile(const string& aFileName);
 	void SaveAs(const string& aFileName);
 	// From MsuMwndMenuObserver
