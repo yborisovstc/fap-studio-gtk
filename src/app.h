@@ -21,10 +21,14 @@ class CsuApp: public MsuMwndMenuObserver
 	virtual void OnCmd(TCmd aCmd);
 	virtual TBool OnCmdUpdateRequest(TCmd aCmd);
     private:
+	static string FormTitle(const string& aFileName);
+	static string GetDefaultLogFileName();
+    private:
 	CsuMainWnd* iMainWnd;
 	CAE_Env* iCaeEnv;
 	CagProvider* iCagProv;
 	MAE_Opv* iViewProxy;
+	string iLogFileName;
 };
 
 #endif 

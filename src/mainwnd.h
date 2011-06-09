@@ -29,6 +29,7 @@ class MsuMwndMenuObserver
 	    ECmd_FileOpen,
 	    ECmd_FileSaveAs,
 	    ECmd_Step,
+	    ECmd_Close,
 	};
     public:
 	virtual void OnCmd(TCmd aCmd) = 0;
@@ -65,9 +66,19 @@ class CsuLogView: public CagTextView
 {
     public:
 	CsuLogView(const string& aName);
+	virtual ~CsuLogView();
 	void SetLogFileName(const string& aLogFileName);
     private:
+	static gboolean handle_timer_event(gpointer data);
+	static void handle_filemon_event(GFileMonitor *monitor, GFile *file, GFile *other_file, GFileMonitorEvent event_type, gpointer user_data);
+	void OnFileChanged(GFileMonitorEvent event);
+	void OnFileContentChanged();
+    private:
 	string iLogFileName;
+	GFile* iLogFile;
+	GFileMonitor* iFileMon;
+	GFileInputStream* iInpStream;
+	GtkTextBuffer* iBuffer;
 };
 
 class CsuMainWnd: public CagWindow, public MOpMainWnd, public MagToolButtonObserver
@@ -78,6 +89,8 @@ class CsuMainWnd: public CagWindow, public MOpMainWnd, public MagToolButtonObser
 	virtual ~CsuMainWnd();
 	void SetMenuObserver(MsuMwndMenuObserver* aObs);
 	void SetEnvLog(const string& aLogFileName);
+	// From CagWidget
+	virtual void OnDestroy();
 	// From CAE_Base
 	virtual void *DoGetObj(const char *aName);
 	// From MagToolButtonObserver

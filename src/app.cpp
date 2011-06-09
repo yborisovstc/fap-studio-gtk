@@ -2,24 +2,46 @@
 #include <cagprov.h>
 #include <widgets.h>
 
-const char* KLogFileName = "fap-tias.log";
+const char* KLogFileName = "fap-studio.log";
+const char* KSpecFileName = "/usr/share/fap-studio-gtk/templ/empty.xml";
+const char* KAppName = "fap-studio";
 
 CsuApp::CsuApp()
 {
+    // Default logfilename
+    iLogFileName = GetDefaultLogFileName();
     // Create Main window
     iMainWnd = new CsuMainWnd("MainWnd");
     iMainWnd->Show();
     iMainWnd->SetMenuObserver(this);
     // Create model
-    iCaeEnv = CAE_Env::NewL(1, NULL, KLogFileName, 1);
+    iCaeEnv = CAE_Env::NewL(NULL, NULL, KSpecFileName, 1, NULL, iLogFileName.c_str());
     // Create view
     iCagProv = new CagProvider(iMainWnd);
     iViewProxy = iCagProv->CreateViewProxy();
+    iCaeEnv->ConstructSystem();
     iCaeEnv->Root()->SetBaseViewProxy(iViewProxy, ETrue);
+
+    iMainWnd->SetEnvLog(iLogFileName);
+    iMainWnd->SetTitle(FormTitle(KSpecFileName));
+    iMainWnd->Maximize();
+}
+
+string CsuApp::FormTitle(const string& aFilePath)
+{
+    size_t pos = aFilePath.find_last_of("/");
+    string filename = pos != string::npos ? aFilePath.substr(pos + 1) : aFilePath;
+    return string(KAppName) + " [" + filename + "]";
 }
 
 CsuApp::~CsuApp()
 {
+}
+
+string CsuApp::GetDefaultLogFileName()
+{
+    const gchar* home = g_getenv("HOME");
+    return string(home) + "/" + KLogFileName;
 }
 
 void CsuApp::OnCmd(TCmd aCmd)
@@ -32,6 +54,9 @@ void CsuApp::OnCmd(TCmd aCmd)
     }
     else if (aCmd == ECmd_Step) {
 	OnCmdStep();
+    }
+    else if (aCmd == ECmd_Close) {
+	gtk_main_quit ();
     }
 }
 
@@ -67,9 +92,10 @@ void CsuApp::OpenFile(const string& aFileName)
 	delete iCaeEnv;
 	iCaeEnv = NULL;
     }
-    iCaeEnv = CAE_Env::NewL(NULL, NULL, aFileName.c_str(), 1, NULL, KLogFileName);
+    iCaeEnv = CAE_Env::NewL(NULL, NULL, aFileName.c_str(), 1, NULL, iLogFileName.c_str());
     iCaeEnv->ConstructSystem();
     iCaeEnv->Root()->SetBaseViewProxy(iViewProxy, ETrue);
+    iMainWnd->SetTitle(FormTitle(aFileName));
 }
 
 void CsuApp::OnCmdFileSaveAs()
