@@ -52,16 +52,14 @@ class CsuMainWndMenu: public CagMenuBar, public MagMenuShellObs
 	MsuMwndMenuObserver* iMenuObs;
 };
 
-class CsuMainWndClient: public CagLayout
+// Client window
+class CsuMainWndClient: public CagScrolledWindow
 {
     public:
 	CsuMainWndClient();
-    private:
-	virtual void OnExpose(GdkEventExpose* aEvent);
-	virtual void OnSizeAllocate(GtkAllocation* aAllocation);
-	virtual void OnSizeRequest(GtkRequisition* aRequisition);
 };
 
+// Log view
 class CsuLogView: public CagTextView
 {
     public:
@@ -73,6 +71,8 @@ class CsuLogView: public CagTextView
 	static void handle_filemon_event(GFileMonitor *monitor, GFile *file, GFile *other_file, GFileMonitorEvent event_type, gpointer user_data);
 	void OnFileChanged(GFileMonitorEvent event);
 	void OnFileContentChanged();
+	void OnFileCreated();
+	void OnFileDeleted();
     private:
 	string iLogFileName;
 	GFile* iLogFile;
@@ -81,6 +81,7 @@ class CsuLogView: public CagTextView
 	GtkTextBuffer* iBuffer;
 };
 
+// Main window
 class CsuMainWnd: public CagWindow, public MOpMainWnd, public MagToolButtonObserver
 {
     public:
@@ -97,7 +98,7 @@ class CsuMainWnd: public CagWindow, public MOpMainWnd, public MagToolButtonObser
 	virtual void OnClicked(CagToolButton* aBtn);
     private:
 	// From MOpMainWnd
-	virtual CagContainer* ClientWnd();
+	virtual CagScrolledWindow* ClientWnd();
 	virtual CagToolBar* Toolbar();
     private:
 	CagVBox* iVboxMain;
@@ -108,6 +109,7 @@ class CsuMainWnd: public CagWindow, public MOpMainWnd, public MagToolButtonObser
 	CagVPaned* iVpaned;
 	CsuLogView* iLogView;
 	MsuMwndMenuObserver* iMenuObs;
+	CagScrolledWindow* iLogWnd;
 };
 
 #endif 

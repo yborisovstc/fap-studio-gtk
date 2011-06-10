@@ -2,6 +2,8 @@
 #include "mainwnd.h"
 
 const string KTbarIcon_Step = "/usr/share/fap-studio-gtk/icons/tbar_btn_step.png";
+const TInt KLogViewDefHeight = 50;
+const TInt KLogViewDefWidth = 250;
 
 
 CsuMainWndMenu::CsuMainWndMenu(): CagMenuBar("Menu"), iMenuObs(NULL), iFileMenu(NULL),
@@ -27,9 +29,6 @@ void CsuMainWndMenu::SetMenuObserver(MsuMwndMenuObserver* aObs)
 
 void CsuMainWndMenu::OnActivated(CagMenuItem* aItem)
 {
-    if (aItem == iFileMenu) {
-//	iFileMenuPopup->Popup(1, gtk_get_current_event_time());
-    }
 }
 
 void CsuMainWndMenu::OnItemActivated(CagMenuShell* aMenuShell, CagMenuItem* aItem)
@@ -64,36 +63,11 @@ CsuMainWndMenuFile::CsuMainWndMenuFile(): CagMenu("FileMenu"), iMenuFileOpen(NUL
 }
 
 
+// Client window
 
-CsuMainWndClient::CsuMainWndClient(): CagLayout("ClientWnd")
+CsuMainWndClient::CsuMainWndClient(): CagScrolledWindow("ClientWnd")
 {
 }
-
-void CsuMainWndClient::OnExpose(GdkEventExpose* aEvent)
-{
-}
-
-void CsuMainWndClient::OnSizeAllocate(GtkAllocation* aAlc)
-{
-    if (!iChilds.empty()) {
-	CagWidget* child = iChilds.begin()->second;
-	GtkRequisition child_req; child->SizeRequest(&child_req);
-	GtkAllocation alc = (GtkAllocation) {0, 0, child_req.width, child_req.height};
-	*aAlc = (GtkAllocation) {0, 0, child_req.width, child_req.height};
-    }
-}
-
-
-void CsuMainWndClient::OnSizeRequest(GtkRequisition* aRequisition)
-{
-    // Calculate child size
-    if (!iChilds.empty()) {
-	CagWidget* child = iChilds.begin()->second;
-	GtkRequisition child_req; child->SizeRequest(&child_req);
-	*aRequisition = child_req;
-    }
-}
-
 
 // Log view
 
@@ -107,8 +81,6 @@ CsuLogView::CsuLogView(const string& aName):
     // Buffer
     iBuffer = gtk_text_buffer_new(NULL);
     SetBuffer(iBuffer);
-    // Timer of monitoring of log file
-//    g_timeout_add(KFapeTimeSlice, idle_event_handler, NULL);
 }
 
 CsuLogView::~CsuLogView()
@@ -120,7 +92,6 @@ void CsuLogView::SetLogFileName(const string& aLogFileName)
 {
     iLogFileName = aLogFileName;
     // Open log
-//    iLogFile = fopen(iLogFileName.c_str(), "r");
     iLogFile = g_file_new_for_path(iLogFileName.c_str());
     // Create monitor
     GFileMonitor* iFileMon = g_file_monitor_file(iLogFile, G_FILE_MONITOR_NONE, NULL, NULL);
@@ -128,9 +99,6 @@ void CsuLogView::SetLogFileName(const string& aLogFileName)
     // Open file for reading
     GError* err;
     iInpStream = g_file_read(iLogFile, NULL, &err);
-    // char* buf = malloc(500);
-    //gssize size = g_input_stream_read(iInpStream, buf, 500, NULL, err);
-//    gboolean res = g_input_stream_read_all(iInpStream, void *buffer, gsize count, gsize *bytes_read, GCancellable *cancellable, GError **error);
 }
 
 void CsuLogView::OnFileContentChanged()
@@ -143,15 +111,40 @@ void CsuLogView::OnFileContentChanged()
     gtk_text_buffer_get_end_iter(iBuffer, &iter);
     gtk_text_buffer_insert(iBuffer, &iter, (const gchar*) buf, size);
     gtk_text_buffer_get_end_iter(iBuffer, &iter);
+    // TODO YB hack
     while(gtk_events_pending()) gtk_main_iteration();
     gboolean res = ScrollToIter(&iter, 0.0, true, 0.0, 1.0);
     g_free(buf);
+}
+
+void CsuLogView::OnFileCreated()
+{
+    // Open file for reading
+    GError* err;
+    iInpStream = g_file_read(iLogFile, NULL, &err);
+}
+
+void CsuLogView::OnFileDeleted()
+{
+    g_object_unref(G_OBJECT(iInpStream));
+    iInpStream = NULL;
+    // Clean buffer
+    GtkTextIter begit, endit;
+    gtk_text_buffer_get_start_iter(iBuffer, &begit);
+    gtk_text_buffer_get_end_iter(iBuffer, &endit);
+    gtk_text_buffer_delete(iBuffer, &begit, &endit);
 }
 
 void CsuLogView::OnFileChanged(GFileMonitorEvent event)
 {
     if (event == G_FILE_MONITOR_EVENT_CHANGED) {
 	OnFileContentChanged();
+    }
+    else if (event == G_FILE_MONITOR_EVENT_DELETED) {
+	OnFileDeleted();
+    }
+    else if (event == G_FILE_MONITOR_EVENT_CREATED) {
+	OnFileCreated();
     }
 }
 
@@ -200,19 +193,21 @@ CsuMainWnd::CsuMainWnd(const string& aName): CagWindow(aName), iMenuObs(NULL)
     
     // V-paned
     iVpaned = new CagVPaned("VPaned");
-    //gtk_container_set_resize_mode(GTK_CONTAINER(iVpaned->iWidget), GTK_RESIZE_QUEUE);
-    //gtk_container_set_resize_mode(GTK_CONTAINER(iVpaned->iWidget), GTK_RESIZE_PARENT);
-    iVboxMain->PackStart(iVpaned, false, false, 2);
+    iVboxMain->PackStart(iVpaned, true, true, 2);
     iVpaned->Show();
     // Client area
     iClientWnd = new CsuMainWndClient();
     iVpaned->Add1(iClientWnd);
     iClientWnd->Show();
+
     // Log View
+    iLogWnd = new CagScrolledWindow("LogWnd");
     iLogView = new CsuLogView("Logview");
     // TODO YB Hack
-    iLogView->SetSizeRequest(200, 50);
-    iVpaned->Add2(iLogView);
+    iLogView->SetSizeRequest(KLogViewDefWidth, KLogViewDefHeight);
+    iLogWnd->Add(iLogView);
+    iLogWnd->Show();
+    iVpaned->Pack2(iLogWnd, false, false);
     iLogView->Show();
 }
 
@@ -232,7 +227,7 @@ void* CsuMainWnd::DoGetObj(const char *aName)
     else return CagWindow::DoGetObj(aName);
 }
 
-CagContainer* CsuMainWnd::ClientWnd()
+CagScrolledWindow* CsuMainWnd::ClientWnd()
 {
     return iClientWnd;
 }
