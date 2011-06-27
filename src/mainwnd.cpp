@@ -2,6 +2,9 @@
 #include "mainwnd.h"
 
 const string KTbarIcon_Step = "/usr/share/fap-studio-gtk/icons/tbar_btn_step.png";
+const string KTbarIcon_Run = "/usr/share/fap-studio-gtk/icons/tbar_btn_run.png";
+const string KTbarIcon_Pause = "/usr/share/fap-studio-gtk/icons/tbar_btn_pause.png";
+
 const TInt KLogViewDefHeight = 50;
 const TInt KLogViewDefWidth = 250;
 
@@ -184,6 +187,18 @@ CsuMainWnd::CsuMainWnd(const string& aName): CagWindow(aName), iMenuObs(NULL)
     iToolbar = new CagToolBar("Toolbar");
     iVboxMenuTbar->PackStart(iToolbar, false, false, 1);
     iToolbar->Show();
+     // Button "Run"
+    CagToolButton* sBtnRun = new CagToolButton("BtnRun");
+    sBtnRun->SetImage(KTbarIcon_Run);
+    sBtnRun->SetObserver(this);
+    sBtnRun->Show();
+    iToolbar->Insert(sBtnRun, 0);
+     // Button "Pause"
+    CagToolButton* sBtnPause = new CagToolButton("BtnPause");
+    sBtnPause->SetImage(KTbarIcon_Pause);
+    sBtnPause->SetObserver(this);
+    sBtnPause->Show();
+    iToolbar->Insert(sBtnPause, 0);
     // Button "Step"
     CagToolButton* sBtnStep = new CagToolButton("BtnStep");
     sBtnStep->SetImage(KTbarIcon_Step);
@@ -195,6 +210,10 @@ CsuMainWnd::CsuMainWnd(const string& aName): CagWindow(aName), iMenuObs(NULL)
     iVpaned = new CagVPaned("VPaned");
     iVboxMain->PackStart(iVpaned, true, true, 2);
     iVpaned->Show();
+    // Paned 2
+    iPaned2 = new CagHPaned("Paned2");
+    iVpaned->Add2(iPaned2);
+    iPaned2->Show();
     // Client area
     iClientWnd = new CsuMainWndClient();
     iVpaned->Add1(iClientWnd);
@@ -207,8 +226,13 @@ CsuMainWnd::CsuMainWnd(const string& aName): CagWindow(aName), iMenuObs(NULL)
     iLogView->SetSizeRequest(KLogViewDefWidth, KLogViewDefHeight);
     iLogWnd->Add(iLogView);
     iLogWnd->Show();
-    iVpaned->Pack2(iLogWnd, false, false);
+//    iVpaned->Pack2(iLogWnd, false, false);
+    iPaned2->Pack1(iLogWnd, false, false);
     iLogView->Show();
+    // Environment visualization window
+    iEnviWnd = new CagAlignment("Envi", 1.0, 1.0, 1.0, 1.0);
+    iPaned2->Pack2(iEnviWnd, true, true);
+    iEnviWnd->Show();
 }
 
 CsuMainWnd::~CsuMainWnd()
@@ -256,6 +280,16 @@ void CsuMainWnd::OnClicked(CagToolButton* aBtn)
 	    iMenuObs->OnCmd(MsuMwndMenuObserver::ECmd_Step);
 	}
     }
+    else if (aBtn == iToolbar->Child("BtnRun")) {
+	if (iMenuObs != NULL) {
+	    iMenuObs->OnCmd(MsuMwndMenuObserver::ECmd_Run);
+	}
+    }
+    else if (aBtn == iToolbar->Child("BtnPause")) {
+	if (iMenuObs != NULL) {
+	    iMenuObs->OnCmd(MsuMwndMenuObserver::ECmd_Pause);
+	}
+    }
 }
 
 void CsuMainWnd::OnDestroy()
@@ -266,3 +300,7 @@ void CsuMainWnd::OnDestroy()
 }
 
 
+CagWidget* CsuMainWnd::GetEnviw()
+{
+    return iEnviWnd;
+}

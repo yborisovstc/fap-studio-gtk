@@ -2,7 +2,7 @@
 
 <!-- Specification of FAP environment for empty root -->
 
-<!DOCTYPE  iobject SYSTEM "/home/yborisov/projects/fap/git/fapws/src/objspec.dtd"> 
+<!DOCTYPE  iobject SYSTEM "/usr/share/fapws/conf/objspec.dtd"> 
 
 <iobject type="none" id="root">
 </iobject> 

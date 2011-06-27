@@ -29,6 +29,8 @@ class MsuMwndMenuObserver
 	    ECmd_FileOpen,
 	    ECmd_FileSaveAs,
 	    ECmd_Step,
+	    ECmd_Run,
+	    ECmd_Pause,
 	    ECmd_Close,
 	};
     public:
@@ -90,6 +92,7 @@ class CsuMainWnd: public CagWindow, public MOpMainWnd, public MagToolButtonObser
 	virtual ~CsuMainWnd();
 	void SetMenuObserver(MsuMwndMenuObserver* aObs);
 	void SetEnvLog(const string& aLogFileName);
+	CagWidget* GetEnviw();
 	// From CagWidget
 	virtual void OnDestroy();
 	// From CAE_Base
@@ -107,9 +110,11 @@ class CsuMainWnd: public CagWindow, public MOpMainWnd, public MagToolButtonObser
 	CagToolBar* iToolbar;
 	CsuMainWndClient* iClientWnd;
 	CagVPaned* iVpaned;
+	CagHPaned* iPaned2;
 	CsuLogView* iLogView;
 	MsuMwndMenuObserver* iMenuObs;
 	CagScrolledWindow* iLogWnd;
+	CagAlignment* iEnviWnd;
 };
 
 #endif 

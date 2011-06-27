@@ -2,6 +2,8 @@ SUBDIRS = src
 
 iconsdir = $(pkgdatadir)/icons
 dist_icons_DATA = \
+	     img/tbar_btn_run.png \
+	     img/tbar_btn_pause.png \
 	     img/tbar_btn_step.png
 
 
@@ -11,6 +13,8 @@ dist_templ_DATA = \
 
 
 EXTRA_DIST = \
+	     img/tbar_btn_run.png \
+	     img/tbar_btn_pause.png \
 	     img/tbar_btn_step.png \
 	     files/empty.xml
 	

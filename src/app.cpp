@@ -6,7 +6,32 @@ const char* KLogFileName = "fap-studio.log";
 const char* KSpecFileName = "/usr/share/fap-studio-gtk/templ/empty.xml";
 const char* KAppName = "fap-studio";
 
-CsuApp::CsuApp()
+/* Time slice of FAP environment, in milliseconds */
+const gint KFapeTimeSlice = 50;
+
+CsuVisAdp::CsuVisAdp(const string&  aInstName, CAE_Env* aEnv): CAE_Object(aInstName.c_str(), NULL, aEnv)
+{
+    iWnd = CAE_TState<TUint32>::NewL("Viswinadp", this, TTransInfo());
+}
+
+void CsuVisAdp::SetWnd(CagWidget* aWnd)
+{
+    (*iWnd) = (TUint32) aWnd->iWidget;
+    iWnd->Confirm();
+}
+
+TBool CsuVisAdp::ConnectWnd(CAE_ConnPointBase* aCp)
+{
+    aCp->Connect(iWnd->Output());
+    iWnd->Output()->Connect(aCp);
+}
+
+void CsuVisAdp::DisconnectWnd()
+{
+    iWnd->Output()->Disconnect();
+}
+
+CsuApp::CsuApp(): iRun(EFalse)
 {
     // Default logfilename
     iLogFileName = GetDefaultLogFileName();
@@ -25,6 +50,14 @@ CsuApp::CsuApp()
     iMainWnd->SetEnvLog(iLogFileName);
     iMainWnd->SetTitle(FormTitle(KSpecFileName));
     iMainWnd->Maximize();
+
+    // Visualization window adapter
+    iVisAdp = new CsuVisAdp("VisAdp", iCaeEnv);
+    CAE_ConnPointBase* c_adinp = iCaeEnv->Root()->GetInpN("viswin");
+    if (c_adinp != NULL) {
+	iVisAdp->ConnectWnd(c_adinp);
+    }
+    iVisAdp->SetWnd(iMainWnd->GetEnviw());
 }
 
 string CsuApp::FormTitle(const string& aFilePath)
@@ -36,6 +69,20 @@ string CsuApp::FormTitle(const string& aFilePath)
 
 CsuApp::~CsuApp()
 {
+}
+
+gboolean CsuApp::HandleTimerEvent(gpointer data)
+{
+    CsuApp* self = (CsuApp*) data;
+    return self->OnTimerEvent();
+}
+
+gboolean CsuApp::OnTimerEvent()
+{
+    if (iRun) {
+	iCaeEnv->Step();
+    }
+    return iRun;
 }
 
 string CsuApp::GetDefaultLogFileName()
@@ -57,6 +104,12 @@ void CsuApp::OnCmd(TCmd aCmd)
     }
     else if (aCmd == ECmd_Close) {
 	gtk_main_quit ();
+    }
+    else if (aCmd == ECmd_Run) {
+	OnCmdRun();
+    }
+    else if (aCmd == ECmd_Pause) {
+	OnCmdPause();
     }
 }
 
@@ -84,6 +137,17 @@ void CsuApp::OnCmdStep()
     iCaeEnv->Step();
 }
 
+void CsuApp::OnCmdRun()
+{
+    iTickToId = g_timeout_add(KFapeTimeSlice, HandleTimerEvent, this);
+    iRun = ETrue;
+}
+
+void CsuApp::OnCmdPause()
+{
+    iRun = EFalse;
+}
+
 void CsuApp::OpenFile(const string& aFileName)
 {
     if (iCaeEnv != NULL) {
@@ -91,11 +155,20 @@ void CsuApp::OpenFile(const string& aFileName)
 	iViewProxy->UnsetRoot(iCaeEnv->Root());
 	delete iCaeEnv;
 	iCaeEnv = NULL;
+	delete iVisAdp;
+	iVisAdp = NULL;
     }
     iCaeEnv = CAE_Env::NewL(NULL, NULL, aFileName.c_str(), 1, NULL, iLogFileName.c_str());
     iCaeEnv->ConstructSystem();
     iCaeEnv->Root()->SetBaseViewProxy(iViewProxy, ETrue);
     iMainWnd->SetTitle(FormTitle(aFileName));
+    // Visualization window adapter
+    iVisAdp = new CsuVisAdp("VisAdp", iCaeEnv);
+    CAE_ConnPointBase* c_adinp = iCaeEnv->Root()->GetInpN("viswin");
+    if (c_adinp != NULL) {
+	iVisAdp->ConnectWnd(c_adinp);
+    }
+    iVisAdp->SetWnd(iMainWnd->GetEnviw());
 }
 
 void CsuApp::OnCmdFileSaveAs()
