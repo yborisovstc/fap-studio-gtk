@@ -3,6 +3,7 @@
 #include <widgets.h>
 
 const char* KLogFileName = "fap-studio.log";
+const char* KTmpFileName = ".fap-studio-tmp.xml";
 const char* KSpecFileName = "/usr/share/fap-studio-gtk/templ/empty.xml";
 const char* KAppName = "fap-studio";
 
@@ -91,6 +92,12 @@ string CsuApp::GetDefaultLogFileName()
     return string(home) + "/" + KLogFileName;
 }
 
+string CsuApp::GetDefaultTmpFileName()
+{
+    const gchar* home = g_getenv("HOME");
+    return string(home) + "/" + KTmpFileName;
+}
+
 void CsuApp::OnCmd(TCmd aCmd)
 {
     if (aCmd == ECmd_FileOpen) {
@@ -111,6 +118,12 @@ void CsuApp::OnCmd(TCmd aCmd)
     else if (aCmd == ECmd_Pause) {
 	OnCmdPause();
     }
+    else if (aCmd == ECmd_Start) {
+	OnCmdStart();
+    }
+    else if (aCmd == ECmd_Stop) {
+	OnCmdStop();
+    }
 }
 
 TBool CsuApp::OnCmdUpdateRequest(TCmd aCmd)
@@ -127,6 +140,7 @@ void CsuApp::OnCmdOpenFile()
 	char *filename;
 	filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
 	OpenFile(filename);
+	iSaved = EFalse;
 	g_free (filename);
     }
     gtk_widget_destroy (dialog);
@@ -134,11 +148,19 @@ void CsuApp::OnCmdOpenFile()
 
 void CsuApp::OnCmdStep()
 {
+    if (!iSaved) {
+	SaveAs(GetDefaultTmpFileName());
+	iSaved = ETrue;
+    };
     iCaeEnv->Step();
 }
 
 void CsuApp::OnCmdRun()
 {
+    if (!iSaved) {
+	SaveAs(GetDefaultTmpFileName());
+	iSaved = ETrue;
+    };
     iTickToId = g_timeout_add(KFapeTimeSlice, HandleTimerEvent, this);
     iRun = ETrue;
 }
@@ -146,6 +168,22 @@ void CsuApp::OnCmdRun()
 void CsuApp::OnCmdPause()
 {
     iRun = EFalse;
+    g_source_remove(iTickToId);
+}
+
+void CsuApp::OnCmdStart()
+{
+    OnCmdStop();
+    OnCmdRun();
+}
+
+void CsuApp::OnCmdStop()
+{
+    iRun = EFalse;
+    g_source_remove(iTickToId);
+    if (iSaved) {
+	OpenFile(GetDefaultTmpFileName());
+    }
 }
 
 void CsuApp::OpenFile(const string& aFileName)
@@ -190,4 +228,9 @@ void CsuApp::SaveAs(const string& aFileName)
 {
     iCaeEnv->Root()->Chromo().Save(aFileName);
 }
+
+void CsuApp::SaveTmp()
+{
+}
+
 

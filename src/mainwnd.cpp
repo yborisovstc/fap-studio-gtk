@@ -4,6 +4,8 @@
 const string KTbarIcon_Step = "/usr/share/fap-studio-gtk/icons/tbar_btn_step.png";
 const string KTbarIcon_Run = "/usr/share/fap-studio-gtk/icons/tbar_btn_run.png";
 const string KTbarIcon_Pause = "/usr/share/fap-studio-gtk/icons/tbar_btn_pause.png";
+const string KTbarIcon_Stop = "/usr/share/fap-studio-gtk/icons/tbar_btn_stop.png";
+const string KTbarIcon_Start = "/usr/share/fap-studio-gtk/icons/tbar_btn_start.png";
 
 const TInt KLogViewDefHeight = 50;
 const TInt KLogViewDefWidth = 250;
@@ -205,6 +207,20 @@ CsuMainWnd::CsuMainWnd(const string& aName): CagWindow(aName), iMenuObs(NULL)
     sBtnStep->SetObserver(this);
     sBtnStep->Show();
     iToolbar->Insert(sBtnStep, 0);
+    // Button "Start"
+    CagToolButton* sBtnStart = new CagToolButton("BtnStart");
+    sBtnStart->SetImage(KTbarIcon_Start);
+    sBtnStart->SetObserver(this);
+    sBtnStart->Show();
+    iToolbar->Insert(sBtnStart, 0);
+    // Button "Stop"
+    CagToolButton* sBtnStop = new CagToolButton("BtnStop");
+    sBtnStop->SetImage(KTbarIcon_Stop);
+    sBtnStop->SetObserver(this);
+    sBtnStop->Show();
+    iToolbar->Insert(sBtnStop, 0);
+    // Separator
+    iToolbar->InsertSeparator(0, ETrue);
     
     // V-paned
     iVpaned = new CagVPaned("VPaned");
@@ -288,6 +304,16 @@ void CsuMainWnd::OnClicked(CagToolButton* aBtn)
     else if (aBtn == iToolbar->Child("BtnPause")) {
 	if (iMenuObs != NULL) {
 	    iMenuObs->OnCmd(MsuMwndMenuObserver::ECmd_Pause);
+	}
+    }
+    else if (aBtn == iToolbar->Child("BtnStart")) {
+	if (iMenuObs != NULL) {
+	    iMenuObs->OnCmd(MsuMwndMenuObserver::ECmd_Start);
+	}
+    }
+    else if (aBtn == iToolbar->Child("BtnStop")) {
+	if (iMenuObs != NULL) {
+	    iMenuObs->OnCmd(MsuMwndMenuObserver::ECmd_Stop);
 	}
     }
 }

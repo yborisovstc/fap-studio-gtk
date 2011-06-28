@@ -29,14 +29,18 @@ class CsuApp: public MsuMwndMenuObserver
 	void OnCmdStep();
 	void OnCmdRun();
 	void OnCmdPause();
+	void OnCmdStart();
+	void OnCmdStop();
 	void OpenFile(const string& aFileName);
 	void SaveAs(const string& aFileName);
+	void SaveTmp();
 	// From MsuMwndMenuObserver
 	virtual void OnCmd(TCmd aCmd);
 	virtual TBool OnCmdUpdateRequest(TCmd aCmd);
     private:
 	static string FormTitle(const string& aFileName);
 	static string GetDefaultLogFileName();
+	static string GetDefaultTmpFileName();
 	gboolean static HandleTimerEvent(gpointer data);
 	gboolean OnTimerEvent();
     private:
@@ -48,6 +52,7 @@ class CsuApp: public MsuMwndMenuObserver
 	TBool iRun;
 	guint iTickToId;
 	CsuVisAdp* iVisAdp;
+	TBool iSaved;
 };
 
 #endif 

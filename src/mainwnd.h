@@ -31,6 +31,8 @@ class MsuMwndMenuObserver
 	    ECmd_Step,
 	    ECmd_Run,
 	    ECmd_Pause,
+	    ECmd_Start,
+	    ECmd_Stop,
 	    ECmd_Close,
 	};
     public:
