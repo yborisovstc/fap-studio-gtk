@@ -26,6 +26,7 @@ class CsuApp: public MsuMwndMenuObserver
     private:
 	void OnCmdOpenFile();
 	void OnCmdFileSaveAs();
+	void OnCmdFileSave();
 	void OnCmdStep();
 	void OnCmdRun();
 	void OnCmdPause();
@@ -53,6 +54,8 @@ class CsuApp: public MsuMwndMenuObserver
 	guint iTickToId;
 	CsuVisAdp* iVisAdp;
 	TBool iSaved;
+	TBool iIsTempl; // System is created from template spec
+	string iSpecFileName;
 };
 
 #endif 

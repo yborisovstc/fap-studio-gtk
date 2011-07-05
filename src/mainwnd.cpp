@@ -34,6 +34,7 @@ void CsuMainWndMenu::SetMenuObserver(MsuMwndMenuObserver* aObs)
 
 void CsuMainWndMenu::OnActivated(CagMenuItem* aItem)
 {
+    iFileMenuPopup->iMenuFileSave->SetSensitive(iMenuObs->OnCmdUpdateRequest(MsuMwndMenuObserver::ECmd_FileSave));
 }
 
 void CsuMainWndMenu::OnItemActivated(CagMenuShell* aMenuShell, CagMenuItem* aItem)
@@ -45,6 +46,9 @@ void CsuMainWndMenu::OnItemActivated(CagMenuShell* aMenuShell, CagMenuItem* aIte
 	}
 	else if (aItem == iFileMenuPopup->iMenuFileSaveAs) {
 	    cmd = MsuMwndMenuObserver::ECmd_FileSaveAs;
+	}
+	else if (aItem == iFileMenuPopup->iMenuFileSave) {
+	    cmd = MsuMwndMenuObserver::ECmd_FileSave;
 	}
     }
     if (iMenuObs != NULL) {
@@ -61,6 +65,10 @@ CsuMainWndMenuFile::CsuMainWndMenuFile(): CagMenu("FileMenu"), iMenuFileOpen(NUL
     iMenuFileOpen = new CagMenuItem("FileOpen", "Open");    
     Append(iMenuFileOpen);
     iMenuFileOpen->Show();
+    // Item "Save"
+    iMenuFileSave = new CagMenuItem("FileSave", "Save");    
+    Append(iMenuFileSave);
+    iMenuFileSave->Show();
     // Item "Save as"
     iMenuFileSaveAs = new CagMenuItem("FileSaveAs", "Save as");    
     Append(iMenuFileSaveAs);

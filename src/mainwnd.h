@@ -18,6 +18,7 @@ class CsuMainWndMenuFile: public CagMenu
 	CsuMainWndMenuFile();
     private:
 	CagMenuItem* iMenuFileOpen;
+	CagMenuItem* iMenuFileSave;
 	CagMenuItem* iMenuFileSaveAs;
 };
 
@@ -27,6 +28,7 @@ class MsuMwndMenuObserver
 	enum TCmd
 	{
 	    ECmd_FileOpen,
+	    ECmd_FileSave,
 	    ECmd_FileSaveAs,
 	    ECmd_Step,
 	    ECmd_Run,

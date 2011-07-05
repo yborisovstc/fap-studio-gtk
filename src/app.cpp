@@ -46,7 +46,9 @@ CsuApp::CsuApp(): iRun(EFalse)
     iCagProv = new CagProvider(iMainWnd);
     iViewProxy = iCagProv->CreateViewProxy();
     iCaeEnv->ConstructSystem();
-    iCaeEnv->Root()->SetBaseViewProxy(iViewProxy, ETrue);
+    iIsTempl = ETrue;
+    iViewProxy->SetRoot(iCaeEnv->RootCtrl());
+    iViewProxy->SetObj(iCaeEnv->RootCtrl());
 
     iMainWnd->SetEnvLog(iLogFileName);
     iMainWnd->SetTitle(FormTitle(KSpecFileName));
@@ -106,6 +108,9 @@ void CsuApp::OnCmd(TCmd aCmd)
     else if (aCmd == ECmd_FileSaveAs) {
 	OnCmdFileSaveAs();
     }
+    else if (aCmd == ECmd_FileSave) {
+	OnCmdFileSave();
+    }
     else if (aCmd == ECmd_Step) {
 	OnCmdStep();
     }
@@ -128,6 +133,11 @@ void CsuApp::OnCmd(TCmd aCmd)
 
 TBool CsuApp::OnCmdUpdateRequest(TCmd aCmd)
 {
+    TBool res = ETrue;
+    if (aCmd == ECmd_FileSave) {
+	res = !iIsTempl;
+    }
+    return res;
 }
 
 void CsuApp::OnCmdOpenFile()
@@ -189,7 +199,7 @@ void CsuApp::OnCmdStop()
 void CsuApp::OpenFile(const string& aFileName)
 {
     if (iCaeEnv != NULL) {
-	iCaeEnv->Root()->RemoveBaseViewProxy(iViewProxy);
+	iViewProxy->UnsetObj(NULL);
 	iViewProxy->UnsetRoot(iCaeEnv->Root());
 	delete iCaeEnv;
 	iCaeEnv = NULL;
@@ -198,7 +208,9 @@ void CsuApp::OpenFile(const string& aFileName)
     }
     iCaeEnv = CAE_Env::NewL(NULL, NULL, aFileName.c_str(), 1, NULL, iLogFileName.c_str());
     iCaeEnv->ConstructSystem();
-    iCaeEnv->Root()->SetBaseViewProxy(iViewProxy, ETrue);
+    iViewProxy->SetRoot(iCaeEnv->RootCtrl());
+    iViewProxy->SetObj(iCaeEnv->RootCtrl());
+    iSpecFileName = aFileName;
     iMainWnd->SetTitle(FormTitle(aFileName));
     // Visualization window adapter
     iVisAdp = new CsuVisAdp("VisAdp", iCaeEnv);
@@ -207,6 +219,11 @@ void CsuApp::OpenFile(const string& aFileName)
 	iVisAdp->ConnectWnd(c_adinp);
     }
     iVisAdp->SetWnd(iMainWnd->GetEnviw());
+}
+
+void CsuApp::OnCmdFileSave()
+{
+    SaveAs(iSpecFileName);
 }
 
 void CsuApp::OnCmdFileSaveAs()
@@ -219,6 +236,9 @@ void CsuApp::OnCmdFileSaveAs()
 	char *filename;
 	filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
 	SaveAs(filename);
+	iSpecFileName = filename;
+	iMainWnd->SetTitle(FormTitle(iSpecFileName));
+	iIsTempl = EFalse;
 	g_free (filename);
     }
     gtk_widget_destroy (dialog);
