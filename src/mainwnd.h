@@ -85,6 +85,7 @@ class CsuLogView: public CagTextView
 	GFileMonitor* iFileMon;
 	GFileInputStream* iInpStream;
 	GtkTextBuffer* iBuffer;
+	char* iLogBuffer;
 };
 
 // Main window

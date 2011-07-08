@@ -85,20 +85,22 @@ CsuMainWndClient::CsuMainWndClient(): CagScrolledWindow("ClientWnd")
 // Log view
 
 
-const TInt KLogViewBufLen = 1000;
+const TInt KLogViewBufLen = 4000;
 
 CsuLogView::CsuLogView(const string& aName): 
-    CagTextView(aName), iLogFile(NULL), iFileMon(NULL), iInpStream(NULL)
+    CagTextView(aName), iLogFile(NULL), iFileMon(NULL), iInpStream(NULL), iLogBuffer(NULL)
 {
     SetEditable(EFalse);
     // Buffer
     iBuffer = gtk_text_buffer_new(NULL);
     SetBuffer(iBuffer);
+    iLogBuffer = (char*) g_malloc(KLogViewBufLen);
 }
 
 CsuLogView::~CsuLogView()
 {
     //fclose(iLogFile);
+    g_free(iLogBuffer);
 }
 
 void CsuLogView::SetLogFileName(const string& aLogFileName)
@@ -117,17 +119,16 @@ void CsuLogView::SetLogFileName(const string& aLogFileName)
 void CsuLogView::OnFileContentChanged()
 {
     // Get the new content from file 
-    char* buf = (char*) g_malloc(KLogViewBufLen);
+    iLogBuffer[0] = 0x0;
     GError* err;
-    gssize size = g_input_stream_read(G_INPUT_STREAM(iInpStream), buf, KLogViewBufLen, NULL, &err);
+    gssize size = g_input_stream_read(G_INPUT_STREAM(iInpStream), iLogBuffer, KLogViewBufLen, NULL, &err);
     GtkTextIter iter;
     gtk_text_buffer_get_end_iter(iBuffer, &iter);
-    gtk_text_buffer_insert(iBuffer, &iter, (const gchar*) buf, size);
+    gtk_text_buffer_insert(iBuffer, &iter, (const gchar*) iLogBuffer, size);
     gtk_text_buffer_get_end_iter(iBuffer, &iter);
     // TODO YB hack
     while(gtk_events_pending()) gtk_main_iteration();
     gboolean res = ScrollToIter(&iter, 0.0, true, 0.0, 1.0);
-    g_free(buf);
 }
 
 void CsuLogView::OnFileCreated()

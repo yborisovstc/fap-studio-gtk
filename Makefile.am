@@ -11,8 +11,13 @@ dist_icons_DATA = \
 
 templdir = $(pkgdatadir)/templ
 dist_templ_DATA = \
-	     files/rock_1.xml \
-	     files/empty.xml
+	     templates/empty.xml
+
+examplesdir = $(pkgdatadir)/examples
+dist_examples_DATA = \
+	     examples/rock_1.xml \
+	     examples/rock_2.xml
+
 
 
 EXTRA_DIST = \
@@ -21,7 +26,9 @@ EXTRA_DIST = \
 	     img/tbar_btn_stop.png \
 	     img/tbar_btn_start.png \
 	     img/tbar_btn_step.png \
+	     templates/empty.xml
 	     files/rock_1.xml \
-	     files/empty.xml
+	     examples/rock_1.xml \
+	     examples/rock_2.xml
 	
 

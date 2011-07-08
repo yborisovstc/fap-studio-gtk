@@ -1,10 +1,12 @@
 #include "app.h"
 #include <cagprov.h>
 #include <widgets.h>
+#include <glib/gstdio.h>
 
 const char* KLogFileName = "fap-studio.log";
 const char* KTmpFileName = ".fap-studio-tmp.xml";
 const char* KSpecFileName = "/usr/share/fap-studio-gtk/templ/empty.xml";
+const char* KTemplDirName = "/usr/share/fap-studio-gtk/templ";
 const char* KAppName = "fap-studio";
 
 /* Time slice of FAP environment, in milliseconds */
@@ -32,7 +34,7 @@ void CsuVisAdp::DisconnectWnd()
     iWnd->Output()->Disconnect();
 }
 
-CsuApp::CsuApp(): iRun(EFalse)
+CsuApp::CsuApp(): iRun(EFalse), iStopped(EFalse), iSystObs(*this)
 {
     // Default logfilename
     iLogFileName = GetDefaultLogFileName();
@@ -41,12 +43,13 @@ CsuApp::CsuApp(): iRun(EFalse)
     iMainWnd->Show();
     iMainWnd->SetMenuObserver(this);
     // Create model
+    iSpecFileName = KSpecFileName;
     iCaeEnv = CAE_Env::NewL(NULL, NULL, KSpecFileName, 1, NULL, iLogFileName.c_str());
     // Create view
     iCagProv = new CagProvider(iMainWnd);
     iViewProxy = iCagProv->CreateViewProxy();
     iCaeEnv->ConstructSystem();
-    iIsTempl = ETrue;
+    iIsTempl = !IsSpecFileWrittable();
     iViewProxy->SetRoot(iCaeEnv->RootCtrl());
     iViewProxy->SetObj(iCaeEnv->RootCtrl());
 
@@ -154,25 +157,36 @@ void CsuApp::OnCmdOpenFile()
 	g_free (filename);
     }
     gtk_widget_destroy (dialog);
+    OnCmdStop();
 }
 
 void CsuApp::OnCmdStep()
 {
-    if (!iSaved) {
-	SaveAs(GetDefaultTmpFileName());
-	iSaved = ETrue;
+    // Save in temp if mutated
+    if (iStopped && (iChanged || !iSaved)) {
+	SaveTmp();
     };
+    if (iStopped) {
+	// Activate for root was deactivated on stop
+	iCaeEnv->Root()->Activate();
+    }
     iCaeEnv->Step();
+    iStopped = EFalse;
 }
 
 void CsuApp::OnCmdRun()
 {
-    if (!iSaved) {
-	SaveAs(GetDefaultTmpFileName());
-	iSaved = ETrue;
+    // Save in temp if mutated
+    if (iStopped && (iChanged || !iSaved)) {
+	SaveTmp();
     };
+    if (iStopped) {
+	// Activate for root was deactivated on stop
+	iCaeEnv->Root()->Activate();
+    }
     iTickToId = g_timeout_add(KFapeTimeSlice, HandleTimerEvent, this);
     iRun = ETrue;
+    iStopped = EFalse;
 }
 
 void CsuApp::OnCmdPause()
@@ -191,12 +205,22 @@ void CsuApp::OnCmdStop()
 {
     iRun = EFalse;
     g_source_remove(iTickToId);
-    if (iSaved) {
-	OpenFile(GetDefaultTmpFileName());
+#if 0
+    // Save in temp if mutated
+    if (iStopped && iChanged) {
+	SaveTmp();
+    };
+#endif
+    if (!iStopped && iSaved) {
+	OpenFile(GetDefaultTmpFileName(), ETrue);
     }
+    iStopped = ETrue;
+    // Reset root active to detect the manual mutations
+    iCaeEnv->Root()->Deactivate();
+    iChanged = EFalse;
 }
 
-void CsuApp::OpenFile(const string& aFileName)
+void CsuApp::OpenFile(const string& aFileName, TBool aAsTmp)
 {
     if (iCaeEnv != NULL) {
 	iViewProxy->UnsetObj(NULL);
@@ -210,8 +234,14 @@ void CsuApp::OpenFile(const string& aFileName)
     iCaeEnv->ConstructSystem();
     iViewProxy->SetRoot(iCaeEnv->RootCtrl());
     iViewProxy->SetObj(iCaeEnv->RootCtrl());
-    iSpecFileName = aFileName;
-    iMainWnd->SetTitle(FormTitle(aFileName));
+    if (!aAsTmp) {
+	iSpecFileName = aFileName;
+	iIsTempl = !IsSpecFileWrittable();
+	iMainWnd->SetTitle(FormTitle(aFileName));
+    }
+    // Set observer to detect changes
+    iCaeEnv->Root()->SetEbaseObsRec(&iSystObs);
+    iChanged = EFalse;
     // Visualization window adapter
     iVisAdp = new CsuVisAdp("VisAdp", iCaeEnv);
     CAE_ConnPointBase* c_adinp = iCaeEnv->Root()->GetInpN("viswin");
@@ -251,6 +281,28 @@ void CsuApp::SaveAs(const string& aFileName)
 
 void CsuApp::SaveTmp()
 {
+    SaveAs(GetDefaultTmpFileName());
+    iSaved = ETrue;
 }
 
+TBool CsuApp::IsSpecFileWrittable()
+{
+    int res = g_access(iSpecFileName.c_str(), W_OK);
+    return (res == 0);
+}
+
+
+void CsuSystObserver::OnActivated(CAE_EBase* aObj)
+{
+    iOwner.iChanged = ETrue;
+}
+
+
+void* CsuSystObserver::DoGetFbObj(const char *aName)
+{
+    void* res = NULL;
+    if (strcmp(aName, MAE_EbaseObserver::Type()) == 0) 
+	res = (MAE_EbaseObserver*) this;
+    return res;
+}
 

@@ -17,9 +17,24 @@ private:
 };
 
 
+class CsuApp;
+class CsuSystObserver: public CAE_Base, public MAE_EbaseObserver
+{
+    public:
+	CsuSystObserver(CsuApp& aOwner): iOwner(aOwner) {};
+	// From MAE_EbaseObserver
+       	virtual void OnActivated(CAE_EBase* aObj);
+	// From CAE_EBase
+	virtual void *DoGetFbObj(const char *aName);
+    private:
+	CsuApp& iOwner;
+};
+
 class CagProvider;
 class CsuApp: public MsuMwndMenuObserver
 {
+    public:
+	friend class CsuSystObserver;
     public:
 	CsuApp();
 	virtual ~CsuApp();
@@ -32,7 +47,7 @@ class CsuApp: public MsuMwndMenuObserver
 	void OnCmdPause();
 	void OnCmdStart();
 	void OnCmdStop();
-	void OpenFile(const string& aFileName);
+	void OpenFile(const string& aFileName, TBool aAsTmp = EFalse);
 	void SaveAs(const string& aFileName);
 	void SaveTmp();
 	// From MsuMwndMenuObserver
@@ -44,6 +59,7 @@ class CsuApp: public MsuMwndMenuObserver
 	static string GetDefaultTmpFileName();
 	gboolean static HandleTimerEvent(gpointer data);
 	gboolean OnTimerEvent();
+	TBool IsSpecFileWrittable();
     private:
 	CsuMainWnd* iMainWnd;
 	CAE_Env* iCaeEnv;
@@ -56,6 +72,9 @@ class CsuApp: public MsuMwndMenuObserver
 	TBool iSaved;
 	TBool iIsTempl; // System is created from template spec
 	string iSpecFileName;
+	TBool iStopped;
+	TBool iChanged;
+	CsuSystObserver iSystObs;
 };
 
 #endif 
