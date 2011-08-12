@@ -11,7 +11,6 @@ public:
     CsuVisAdp(const string&  aInstName, CAE_Env* aEnv);
     void SetWnd(CagWidget* aWnd);
     TBool ConnectWnd(CAE_ConnPointBase* aCp);
-    void DisconnectWnd();
 private:
     CAE_TState<TUint32>*   iWnd;
 };

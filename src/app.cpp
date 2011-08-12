@@ -29,11 +29,6 @@ TBool CsuVisAdp::ConnectWnd(CAE_ConnPointBase* aCp)
     iWnd->Output()->Connect(aCp);
 }
 
-void CsuVisAdp::DisconnectWnd()
-{
-    iWnd->Output()->Disconnect();
-}
-
 CsuApp::CsuApp(): iRun(EFalse), iStopped(EFalse), iSystObs(*this)
 {
     // Default logfilename
